@@ -29,8 +29,9 @@ Article: https://software.intel.com/en-us/creating-a-bluetooth-low-energy-app/
 var bleno = require('bleno');
 
 var BlenoPrimaryService = bleno.PrimaryService;
-
+shellCharacteristic
 var FirstCharacteristic = require('./characteristic');
+var shellCharacteristic = require('./shellCharacteristic');
 
 //var tcpSocketHandler = require('./tcpSocket.js');
 
@@ -61,7 +62,8 @@ bleno.on('advertisingStart', function(error) {
       new BlenoPrimaryService({
         uuid: 'fc0f',
         characteristics: [
-          new FirstCharacteristic()
+          new FirstCharacteristic(),
+          new shellCharacteristic()
         ]
       })
     ]);
