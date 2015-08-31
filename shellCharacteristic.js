@@ -6,65 +6,48 @@ var util = require('util');
 var bleno = require('bleno');
 
 var BlenoCharacteristic = bleno.Characteristic;
+var sys = require('sys')
+var exec = require('child_process').exec;
+var child;
 
 //var exports = module.exports = {};
 //var net = require('net');
-var s = require('net').Socket();
-//  this._value = new Buffer("Hello World from Edison!", "utf-8");
-var tcpValue =  new Buffer("TCPINITIAL", "utf-8");
-var tcpUpdateValueCallback = null;
-
- var HOST = '10.0.1.20';
- var PORT = 60128;
-s.connect(PORT, HOST);
-
-    s.on('error', function(e) {
-    if(e.code == 'ECONNREFUSED') {
-        console.log('Is the server running at ' + PORT + '?');
-
-        s.setTimeout(4000, function() {
-            s.connect(PORT, HOST, function(){
-                console.log('CONNECTED TO: ' + HOST + ':' + PORT);
-                s.write('I am the inner superman');
-            });
-        });
-
-        console.log('Timeout for 5 seconds before trying port:' + PORT + ' again');
-
-    }
-    });
-
-//s.write('GET http://www.google.com/ HTTP/1.1\n\n');
-
-s.on('data', function(d){
-    console.log("S_ON DATA=>"+d.toString());
-//    tcpValue =  Buffer(d, "utf-8");
-    
-    
-    if (tcpValue.toString() === "BUFFERBEGIN")
-    {
-        tcpValue = new Buffer(d, "utf-8");
-        console.log('tcpValue is BUFFERBEGIN');
-
-    } else
-    {
-        var   dataBuffer =  new Buffer(d, "utf-8");
-        var newBuffer = Buffer.concat([tcpValue,dataBuffer]);
-        tcpValue = newBuffer;
-        console.log('tcpValue is BUFFERBEGIN');
-    }
-
-    
-      if (tcpUpdateValueCallback) {
-            console.log('FirstCharacteristic TCP updatingValueCallback');
-//              this._updateValueCallback(tcpValue);
-                tcpUpdateValueCallback(tcpValue);
-              tcpValue = new Buffer("BUFFERBEGIN", "utf-8");
-      }
-//    this._updateValueCallback(this._value);
-//    s.end();
-    
-});
+//var s = require('net').Socket();
+////  this._value = new Buffer("Hello World from Edison!", "utf-8");
+//var tcpValue =  new Buffer("TCPINITIAL", "utf-8");
+////
+// var HOST = '10.0.1.20';
+// var PORT = 60128;
+//s.connect(PORT, HOST);
+//
+//    s.on('error', function(e) {
+//    if(e.code == 'ECONNREFUSED') {
+//        console.log('Is the server running at ' + PORT + '?');
+//
+//        s.setTimeout(4000, function() {
+//            s.connect(PORT, HOST, function(){
+//                console.log('CONNECTED TO: ' + HOST + ':' + PORT);
+//                s.write('I am the inner superman');
+//            });
+//        });
+//
+//        console.log('Timeout for 5 seconds before trying port:' + PORT + ' again');
+//
+//    }
+//    });
+//
+////s.write('GET http://www.google.com/ HTTP/1.1\n\n');
+//
+//s.on('data', function(d){
+//    console.log("S_ON DATA=>"+d.toString());
+////    tcpValue =  Buffer(d, "utf-8");
+//    
+//    var   dataBuffer =  new Buffer(d, "utf-8");
+//    var newBuffer = Buffer.concat([tcpValue,dataBuffer]);
+//    tcpValue = newBuffer;
+////    s.end();
+//    
+//});
 
 //s.end();
 //var sendDataToTcp = function(sendString,that) {
@@ -110,9 +93,9 @@ s.on('data', function(d){
 //});
 //     
 // };
-var FirstCharacteristic = function() {
-  FirstCharacteristic.super_.call(this, {
-    uuid: 'fc0f',
+var shellCharacteristic = function() {
+  shellCharacteristic.super_.call(this, {
+    uuid: 'fcff',
     properties: ['read', 'write', 'notify'],
     value: null
   });
@@ -120,43 +103,52 @@ var FirstCharacteristic = function() {
 //  this._value = new Buffer("Hello World from Edison!", "utf-8");
       this._value = new Buffer("Hello World from Edison!", "utf-8");
 
-  console.log("FirstCharacteristic's value: "+this._value);
+  console.log("shellCharacteristic's value: "+this._value);
+    // executes `pwd`
+child = exec("pwd", function (error, stdout, stderr) {
+  sys.print('stdout: ' + stdout);
+  sys.print('stderr: ' + stderr);
+  sys.print('\n');
+
+  if (error !== null) {
+    console.log('exec error: ' + error);
+  }
+});
+
     
   this._updateValueCallback = null;
-tcpUpdateValueCallback = this._updateValueCallback;
-
 };
 
 
-util.inherits(FirstCharacteristic, BlenoCharacteristic);
-FirstCharacteristic.prototype.onReadRequest = function(offset, callback) {
-  console.log('FirstCharacteristic - onReadRequest: value = ' + this._value.toString("utf-8"));
-  console.log('FirstCharacteristic - onReadRequest: tcpValue = ' + tcpValue.toString("utf-8"));
-  console.log('FirstCharacteristic - onReadRequest: tcpValueLength = ' + tcpValue.length);
+util.inherits(shellCharacteristic, BlenoCharacteristic);
+shellCharacteristic.prototype.onReadRequest = function(offset, callback) {
+  console.log('shellCharacteristic - onReadRequest: value = ' + this._value.toString("utf-8"));
+//  console.log('shellCharacteristic - onReadRequest: tcpValue = ' + tcpValue.toString("utf-8"));
+//  console.log('shellCharacteristic - onReadRequest: tcpValueLength = ' + tcpValue.length);
 //    var   sendDataBuffer =  new Buffer(tcpValue, "utf-8");
-    var   sendDataBuffer =  new Buffer(tcpValue);
-    tcpValue = new Buffer("BUFFERBEGIN", "utf-8");
+//    var   sendDataBuffer =  new Buffer(tcpValue);
+//    tcpValue = new Buffer("\nBUFFERBEGIN\n", "utf-8");
 //    tcpValue.length
 
-  callback(this.RESULT_SUCCESS, sendDataBuffer);
+  callback(this.RESULT_SUCCESS, this._value);
 };
 
-FirstCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
-//  this._value = data;
-//    console.log('FirstCharacteristic - onWriteRequest: value = ' + this._value.toString("utf-8"));
-    console.log('FirstCharacteristic - onWriteRequest: value = ' + data.toString("utf-8"));
+shellCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
+  this._value = data;
+    console.log('shellCharacteristic - onWriteRequest: value = ' + this._value.toString("utf-8"));
+//    console.log('shellCharacteristic - onWriteRequest: value = ' + data.toString("utf-8"));
 
   if (this._updateValueCallback) {
-    console.log('FirstCharacteristic - onWriteRequest: notifying');
+    console.log('shellCharacteristic - onWriteRequest: notifying');
 
-//    this._updateValueCallback(this._value);
+    this._updateValueCallback(this._value);
 //    client.write("?VL\r\n");
 //          client.write("%s\r\n",this._value.toString("utf-8"));
 //      sendDataToTcp.write("%s\r\n",this._value.toString("utf-8"));
       var rcvStringToSend = data.toString("utf-8");
 //      sendDataToTcp(rcvStringToSend,this);
 //      var writeString = rcvStringToSend+'\r\n';
-      s.write(rcvStringToSend);
+//      s.write(rcvStringToSend);
 //      s.write(rcvStringToSend);
 //      s.write(rcvStringToSend);
 //      s.write(rcvStringToSend);
@@ -177,19 +169,16 @@ FirstCharacteristic.prototype.onWriteRequest = function(data, offset, withoutRes
   callback(this.RESULT_SUCCESS);
 };
 
-FirstCharacteristic.prototype.onSubscribe = function(maxValueSize, updateValueCallback) {
-  console.log('FirstCharacteristic - onSubscribe');
+shellCharacteristic.prototype.onSubscribe = function(maxValueSize, updateValueCallback) {
+  console.log('shellCharacteristic - onSubscribe');
 
   this._updateValueCallback = updateValueCallback;
-    tcpUpdateValueCallback = this._updateValueCallback;
 };
 
-FirstCharacteristic.prototype.onUnsubscribe = function() {
-  console.log('FirstCharacteristic - onUnsubscribe');
+shellCharacteristic.prototype.onUnsubscribe = function() {
+  console.log('shellCharacteristic - onUnsubscribe');
 
   this._updateValueCallback = null;
-  tcpUpdateValueCallback = this._updateValueCallback;
-
 };
 
  
@@ -233,4 +222,4 @@ FirstCharacteristic.prototype.onUnsubscribe = function() {
 
 //module.exports = tcpSocketHandler;
 
-module.exports = FirstCharacteristic;
+module.exports = shellCharacteristic;
