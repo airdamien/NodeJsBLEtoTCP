@@ -6,93 +6,123 @@ var util = require('util');
 var bleno = require('bleno');
 
 var BlenoCharacteristic = bleno.Characteristic;
-var sys = require('sys')
-var exec = require('child_process').exec;
-var child;
+var sys = require('sys');
+//var exec = require('child_process').exec;
+//var child;
+var shellUpdateValueCallback = null;
+var shellValue =  new Buffer("BUFFERBEGIN", "utf-8");
 
-//var exports = module.exports = {};
-//var net = require('net');
-//var s = require('net').Socket();
-////  this._value = new Buffer("Hello World from Edison!", "utf-8");
-//var tcpValue =  new Buffer("TCPINITIAL", "utf-8");
-////
-// var HOST = '10.0.1.20';
-// var PORT = 60128;
-//s.connect(PORT, HOST);
+function run_cmd(cmd, args ) {
+        console.log('runCmd=>'+cmd);
+    var spawn = require('child_process').spawn;
+    var child = spawn(cmd, args);
+    var resp = "";
+
+    child.stdout.on('data', function (buffer) {
+        resp += buffer.toString();
+    });
+    
+    child.stdout.on('error', function(e) 
+    {
+    console.log('ShellCmd Error');
+    });
+    
+//spawn.on('error', function (err) {
+//  console.log('dir error', err);
+//});
+child.on('error', function (err) {
+  console.log('Spawn Error=>', err);
+});
+    
+    child.on("exit", function(code) {
+    console.log(code);
+    if (shellValue.toString() === "BUFFERBEGIN")
+    {
+        shellValue = new Buffer(resp, "utf-8");
+        console.log('shellValue is BUFFERBEGIN');
+
+    } else
+    {
+        var   dataBuffer =  new Buffer(resp, "utf-8");
+        var newBuffer = Buffer.concat([shellValue,dataBuffer]);
+        shellValue = newBuffer;
+        console.log('shellValue is BUFFERBEGIN');
+    }
+
+    
+      if (shellUpdateValueCallback) {
+            console.log('shellUpdateValueCallback SHELL updatingValueCallback');
+//          this._updateValueCallback(tcpValue);
+            shellUpdateValueCallback(shellValue);
+            shellValue = new Buffer("BUFFERBEGIN", "utf-8");
+      }
+
+});
+
+    child.stdout.on('end', function() {
+//        callBack (resp) 
+        if (shellValue.toString() === "BUFFERBEGIN")
+    {
+        shellValue = new Buffer(resp, "utf-8");
+        console.log('shellValue is BUFFERBEGIN');
+
+    } else
+    {
+        var   dataBuffer =  new Buffer(resp, "utf-8");
+        var newBuffer = Buffer.concat([shellValue,dataBuffer]);
+        shellValue = newBuffer;
+        console.log('shellValue is BUFFERBEGIN');
+    }
+
+    
+      if (shellUpdateValueCallback) {
+            console.log('shellUpdateValueCallback SHELL updatingValueCallback');
+//          this._updateValueCallback(tcpValue);
+            shellUpdateValueCallback(shellValue);
+            shellValue = new Buffer("BUFFERBEGIN", "utf-8");
+      }
+
+    });
+} // ()
+
+
+//var runShellCommand = function(inputCmd,that)
+//{
+//    child = exec(inputCmd+"", function (error, stdout, stderr) {
+//  sys.print('stdout: ' + stdout);
+//  sys.print('stderr: ' + stderr);
+//  sys.print('\n');
+//    
+//    if (shellValue.toString() === "BUFFERBEGIN")
+//    {
+//        shellValue = new Buffer(stdout, "utf-8");
+//        console.log('tcpValue is BUFFERBEGIN');
 //
-//    s.on('error', function(e) {
-//    if(e.code == 'ECONNREFUSED') {
-//        console.log('Is the server running at ' + PORT + '?');
-//
-//        s.setTimeout(4000, function() {
-//            s.connect(PORT, HOST, function(){
-//                console.log('CONNECTED TO: ' + HOST + ':' + PORT);
-//                s.write('I am the inner superman');
-//            });
-//        });
-//
-//        console.log('Timeout for 5 seconds before trying port:' + PORT + ' again');
-//
+//    } else
+//    {
+//        var   dataBuffer =  new Buffer(stdout, "utf-8");
+//        var newBuffer = Buffer.concat([shellValue,dataBuffer]);
+//        shellValue = newBuffer;
+//        console.log('tcpValue is BUFFERBEGIN');
 //    }
-//    });
 //
-////s.write('GET http://www.google.com/ HTTP/1.1\n\n');
+//    
+//      if (shellUpdateValueCallback) {
+//            console.log('shellUpdateValueCallback SHELL updatingValueCallback');
+////          this._updateValueCallback(tcpValue);
+//            shellUpdateValueCallback(shellValue);
+//            shellValue = new Buffer("BUFFERBEGIN", "utf-8");
+//      }
 //
-//s.on('data', function(d){
-//    console.log("S_ON DATA=>"+d.toString());
-////    tcpValue =  Buffer(d, "utf-8");
-//    
-//    var   dataBuffer =  new Buffer(d, "utf-8");
-//    var newBuffer = Buffer.concat([tcpValue,dataBuffer]);
-//    tcpValue = newBuffer;
-////    s.end();
-//    
+//  if (error !== null) {
+//    console.log('exec error: ' + error);
+//  }
 //});
 
-//s.end();
-//var sendDataToTcp = function(sendString,that) {
-//
-//var client = new net.Socket();
-//
-// var HOST = '10.0.1.20';
-// var PORT = 60128;
-//
-// client.connect(PORT, HOST, function(){
-//    console.log('CONNECTED TO: ' + HOST + ':' + PORT);
-//     var writeString = sendString+'\r\n';
-////   client.write('?VL\r\n');
-//        client.write(writeString);
-//});
-//
-//    
-//    
-//    client.on('error', function(e) {
-//    if(e.code == 'ECONNREFUSED') {
-//        console.log('Is the server running at ' + PORT + '?');
-//
-//        client.setTimeout(4000, function() {
-//            client.connect(PORT, HOST, function(){
-//                console.log('CONNECTED TO: ' + HOST + ':' + PORT);
-//                client.write('I am the inner superman');
-//            });
-//        });
-//
-//        console.log('Timeout for 5 seconds before trying port:' + PORT + ' again');
-//
-//    }   
-//});
-//client.on('data', function(data) {
-//    console.log('DATA: ' + data);
-////    that.value
-//    tcpValue =  Buffer(data, "utf-8");
-////    client.destroy();
-//    client.end();
-//});
-//client.on('close', function() {
-//    console.log('Connection closed');
-//});
-//     
-// };
+    
+    
+//};//runShellCommand
+
 var shellCharacteristic = function() {
   shellCharacteristic.super_.call(this, {
     uuid: 'fcff',
@@ -105,15 +135,6 @@ var shellCharacteristic = function() {
 
   console.log("shellCharacteristic's value: "+this._value);
     // executes `pwd`
-child = exec("pwd", function (error, stdout, stderr) {
-  sys.print('stdout: ' + stdout);
-  sys.print('stderr: ' + stderr);
-  sys.print('\n');
-
-  if (error !== null) {
-    console.log('exec error: ' + error);
-  }
-});
 
     
   this._updateValueCallback = null;
@@ -129,42 +150,26 @@ shellCharacteristic.prototype.onReadRequest = function(offset, callback) {
 //    var   sendDataBuffer =  new Buffer(tcpValue);
 //    tcpValue = new Buffer("\nBUFFERBEGIN\n", "utf-8");
 //    tcpValue.length
+    var   sendDataBuffer =  new Buffer(shellValue);
+    shellValue = new Buffer("BUFFERBEGIN", "utf-8");
+//    tcpValue.length
 
-  callback(this.RESULT_SUCCESS, this._value);
+  callback(this.RESULT_SUCCESS, sendDataBuffer);
+//  callback(this.RESULT_SUCCESS, this._value);
 };
 
 shellCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
-  this._value = data;
+//  this._value = data;
     console.log('shellCharacteristic - onWriteRequest: value = ' + this._value.toString("utf-8"));
 //    console.log('shellCharacteristic - onWriteRequest: value = ' + data.toString("utf-8"));
 
-  if (this._updateValueCallback) {
-    console.log('shellCharacteristic - onWriteRequest: notifying');
-
-    this._updateValueCallback(this._value);
-//    client.write("?VL\r\n");
-//          client.write("%s\r\n",this._value.toString("utf-8"));
-//      sendDataToTcp.write("%s\r\n",this._value.toString("utf-8"));
-      var rcvStringToSend = data.toString("utf-8");
-//      sendDataToTcp(rcvStringToSend,this);
-//      var writeString = rcvStringToSend+'\r\n';
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-//      s.write(rcvStringToSend);
-
-//      sendDataToTcp(sendString);
-  }
+//  if (this._updateValueCallback) {
+//    console.log('shellCharacteristic - onWriteRequest: notifying');
+////    this._updateValueCallback(this._value);
+//  }
+    var shellStringToSend = data.toString("utf-8");
+//    run_cmd(shellStringToSend,null);
+    //    runShellCommand(shellStringToSend,this);
 
   callback(this.RESULT_SUCCESS);
 };
@@ -173,53 +178,20 @@ shellCharacteristic.prototype.onSubscribe = function(maxValueSize, updateValueCa
   console.log('shellCharacteristic - onSubscribe');
 
   this._updateValueCallback = updateValueCallback;
+   shellUpdateValueCallback = this._updateValueCallback;
+
 };
 
 shellCharacteristic.prototype.onUnsubscribe = function() {
   console.log('shellCharacteristic - onUnsubscribe');
 
   this._updateValueCallback = null;
+shellUpdateValueCallback = this._updateValueCallback;
+
 };
 
  
 
-     
-// };
-//    
-//    
-//    var client = net.connect({port: 60128,host: '10.0.1.20'},
-//    function() { //'connect' listener
-//  console.log('connected to server!');
-//  client.write('%s\r\n',sendString);
-//});
-//
-//client.on('data', functions(data) {
-//  console.log(data.toString());
-//  client.end();
-//});
-//
-//client.on('end', function() {
-//  console.log('disconnected from server');
-//});
-//
-////
-////var socket = net.createConnection(port, host);
-////console.log('Socket created.');
-////socket.on('data', function(data) {
-////  // Log the response from the HTTP server.
-////  console.log('RESPONSE: ' + data);
-////}).on('connect', function() {
-////  // Manually write an HTTP request.
-////  socket.write("GET / HTTP/1.0\r\n\r\n");
-////}).on('end', function() {
-////  console.log('DONE');
-////});
-//
 
-//}
-
-//} //tcpSocketHandler
-
-//module.exports = tcpSocketHandler;
 
 module.exports = shellCharacteristic;

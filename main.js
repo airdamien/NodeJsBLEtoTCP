@@ -42,6 +42,8 @@ bleno.on('stateChange', function(state) {
 
   if (state === 'poweredOn') {
     bleno.startAdvertising('feedback', ['fc0f']);
+//    bleno.startAdvertising('feedback', ['fcff']);
+
 //      bleno.startAdvertising('025A7775-49AA-42BD-BBDB-E2AE77782966',['025A7775-49AA-42BD-BBDB-E2AE77782966']);
 
   }   
